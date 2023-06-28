@@ -8,7 +8,7 @@ use App\Models\Animal;
 use App\Models\Raza;
 use App\Models\Tipo_Animal;
 use Exception;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class AnimalController extends Controller
 {
@@ -83,7 +83,10 @@ class AnimalController extends Controller
   {
     try {
 
-      $imagen_path = $request->file('imagen')->store('image', 'public');
+      $image = $request->file('imagen');
+
+      $path = Storage::disk('s3')->put('images', $image, 'public');
+      $imageUrl = Storage::disk('s3')->url($path);
 
       $animal = new Animal();
       $animal->nombre = $request->nombre;
@@ -92,7 +95,7 @@ class AnimalController extends Controller
       $animal->castrado = $request->castrado;
       $animal->vacunas = $request->vacunas;
       $animal->descripcion = $request->descripcion;
-      $animal->imagen_path = $imagen_path;
+      $animal->imagen_path = $imageUrl;
       $animal->raza_id = $request->raza_id;
 
       $animal->save();
@@ -128,8 +131,13 @@ class AnimalController extends Controller
         $request->validate([
           'imagen' => ['image', 'required', 'mimes:jpeg,jpg,png', 'max:10240']
         ]);
-        $imagen_path = $request->file('imagen')->store('image', 'public');
-        $animal->imagen_path = $imagen_path;
+
+        $image = $request->file('imagen');
+
+        $path = Storage::disk('s3')->put('images', $image, 'public');
+        $imageUrl = Storage::disk('s3')->url($path);
+
+        $animal->imagen_path = $imageUrl;
       }
 
       $animal->save();
